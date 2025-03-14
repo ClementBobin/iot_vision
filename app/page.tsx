@@ -2,22 +2,43 @@
 
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { transform } from "@/lib/transform";
 import ViewToggle from "@/components/ui/ViewToggle";
 
-export default async function Page({ searchParams }: { searchParams: { [key: string]: string | string[] } }) {
-    const params = await searchParams;
+export default async function Page() {
 
-    const dataApi = [
-        { id: 1, name: "Sensor A", value: 42 },
-        { id: 2, name: "Sensor B", value: 36 },
-        { id: 3, name: "Sensor C", value: 58 }
-    ];
     const dataApiTable = [
-        { id: 1, name: "Sensor A", value: 42, timestamp: "2023-10-01T10:00:00Z", hasSite: ["Site A", "Site B"] },
-        { id: 2, name: "Sensor B", value: 36, timestamp: "2023-10-01T10:05:00Z", hasSite: ["Site B", "Site C"] },
-        { id: 3, name: "Sensor C", value: 58, timestamp: "2023-10-01T10:10:00Z", hasSite: ["Site C", "Site A"] },
-        { id: 4, name: "Sensor B", value: 23, timestamp: "2023-10-01T10:15:00Z", hasSite: ["Site A", "Site B", "Site C"] }
-    ];
+        {
+          "DevEUI": "00-18-b2-10-00-01-17-f0",
+          "Data": [
+            {
+              "Time": "2025-03-14T07:33:36.490Z",
+              "Value": 1.505
+            },
+            {
+              "Time": "2025-03-14T08:12:45.120Z",
+              "Value": 2.123
+            }
+          ]
+        },
+        {
+          "DevEUI": "00-18-b2-10-00-01-17-f1",
+          "Data": [
+            {
+              "Time": "2025-03-14T07:35:36.490Z",
+              "Value": 1.545
+            },
+            {
+              "Time": "2025-03-14T09:45:10.230Z",
+              "Value": 3.200
+            }
+          ]
+        }
+      ];
+
+    const dataApi = await transform(dataApiTable);
+
+    console.log(dataApi);
 
     try {
         return (
@@ -25,7 +46,7 @@ export default async function Page({ searchParams }: { searchParams: { [key: str
                 <Suspense fallback={<Skeleton />}>
                     {/* Pass the transformed data to the ViewToggle component if not null */}
                     {
-                        dataApi.length > 0 && <ViewToggle chartData={dataApi} dataRecord={dataApiTable} dataType={params.dataType as string}/>
+                        dataApi.chartData.length > 0 && <ViewToggle chartData={dataApi.chartData} dataRecord={dataApiTable} config={dataApi.chartConfig}/>
                     }
                 </Suspense>
             </div>

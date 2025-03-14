@@ -1,6 +1,5 @@
 import {type ReactElement, Suspense} from 'react';
 import './globals.css';
-import {ThemeProvider} from "@/components/theme-provider"
 import {Skeleton} from '@/components/ui/skeleton';
 
 export const metadata = {
@@ -14,14 +13,7 @@ export default async function RootLayout({children}: { children: ReactElement })
         <html lang="en">
             <body>
                 <Suspense fallback={<Skeleton/>}>
-                    <ThemeProvider
-                        attribute="class"
-                        defaultTheme="system"
-                        enableSystem
-                        disableTransitionOnChange
-                    >
-                        {children}
-                    </ThemeProvider>
+                    {children}
                 </Suspense>
             </body>
         </html>
