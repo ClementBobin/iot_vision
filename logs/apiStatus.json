@@ -1,4 +1,17 @@
 {
-  "lastChecked": 1742135353214,
-  "status": true
+  "LastChecked": 1742195907578,
+  "Api": {
+    "status": true,
+    "Result": {
+      "Status": "OK",
+      "Uptime": "977.5796359 seconds",
+      "Message": "Server is running",
+      "Timestamp": "2025-03-17T07:18:27.582Z",
+      "Version": "1.0.5",
+      "Unix": 1742195907582
+    },
+    "GenerationTime_ms": 1.3452,
+    "Success": true,
+    "Message": "Success"
+  }
 }

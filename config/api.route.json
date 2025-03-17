@@ -1,6 +1,37 @@
 [
     {
-        "NameQuery": "All Capteurs from Site Agence Actemium",
-        "DescriptionQuery": "Get all Capteurs from Site Agence Actemium"
+        "NameQuery": "éclairage Actemium",
+        "DescriptionQuery": "éclairage générale Actemium",
+        "IntervaleQueryMinutes": 5,
+        "SiteName": "Agence Actemium",
+        "CapteurName": "Phases éclairage générale",
+        "LastTimePeriod": "30d"
+    },
+    {
+        "NameQuery": "Bornes IRNE Actemium",
+        "DescriptionQuery": "Bornes IRNE Actemium",
+        "IntervaleQueryMinutes": 30,
+        "SiteName": "Agence Actemium",
+        "CapteurName": "Phases Bornes IRNE",
+        "Module": "LORA",
+        "LastTimePeriod": "30d"
+    },
+    {
+        "NameQuery": "Linky Actemium",
+        "DescriptionQuery": "Compteur Linky Actemium",
+        "IntervaleQueryMinutes": 60,
+        "SiteName": "Agence Actemium",
+        "CapteurName": "Compteur Linky",
+        "Module": "LORA",
+        "LastTimePeriod": "30d"
+    }, 
+    {
+        "NameQuery": "Eau Actemium",
+        "DescriptionQuery": "Compteur Eau Actemium",
+        "IntervaleQueryMinutes": 60,
+        "SiteName": "Agence Actemium",
+        "CapteurName": "Compteur Eau",
+        "Module": "LORA",
+        "LastTimePeriod": "30d"
     }
 ]
