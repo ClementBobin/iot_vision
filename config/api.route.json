@@ -1,6 +1,6 @@
 [
     {
-        "CapteurName": "Phases éclairage générale",
-        "TimeEnd": "3month"
+        "NameQuery": "All Capteurs from Site Agence Actemium",
+        "DescriptionQuery": "Get all Capteurs from Site Agence Actemium"
     }
 ]

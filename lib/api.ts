@@ -1,130 +1,51 @@
 "use server";
 
-import { unstable_cacheLife as cacheLife } from 'next/cache';
-import { 
-    ApiResponse, 
-    SiteHasCapteurSearchParams, 
-    ReleverCapteurSearchParams, 
-    StatsSearchParams, 
-    SiteHasCapteur, 
-    Capteur, 
-    Stats, 
-    CapteurType 
+import {
+    ReleverCapteurSearchParams,
 } from './model';
-import { UUID } from 'node:crypto';
+import logger from './docs/logger';
+import dotenv from 'dotenv';
 
-const API_BASE_URL = "https://api.example.com";
+dotenv.config();
 
-// Search SiteHasCapteur
-export const searchSiteHasCapteur = async (params: SiteHasCapteurSearchParams): Promise<ApiResponse<SiteHasCapteur>> => {
-    try {
-        const query = new URLSearchParams(params as Record<string, string>).toString();
-        const res = await fetch(`${API_BASE_URL}/api/sitehascapteurs/search?${query}`, {
-            headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!res.ok) throw new Error('Failed to search SiteHasCapteur');
-
-        return await res.json();
-    } catch (error) {
-        console.error('Error fetching SiteHasCapteur:', error);
-        throw error;
-    }
-};
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
 
 // Search ReleverCapteur
-export const searchReleverCapteur = async (params: ReleverCapteurSearchParams): Promise<ApiResponse<Capteur>> => {
+export const searchReleverCapteur = async (params: ReleverCapteurSearchParams): Promise<any> => {
     try {
+        logger.debug(`Searching ReleverCapteur with params: ${JSON.stringify(params)}`);
         const query = new URLSearchParams(params as Record<string, string>).toString();
+        logger.debug(`Query: ${query}`);
+        logger.debug(`URL: ${API_BASE_URL}/api/relevercapteurs/search?${query}`);
         const res = await fetch(`${API_BASE_URL}/api/relevercapteurs/search?${query}`, {
             headers: { 'Content-Type': 'application/json' },
         });
 
-        if (!res.ok) throw new Error('Failed to search ReleverCapteur');
+        if (!res.ok) logger.logWithErrorHandling('searchReleverCapteur:', Error('Failed to search ReleverCapteur'));
 
-        return await res.json();
+        const response = await res.json();
+        logger.debug(`ReleverCapteur: ${JSON.stringify(response)}`);
+        return response;
     } catch (error) {
-        console.error('Error fetching ReleverCapteur:', error);
+        logger.logWithErrorHandling('Error fetching ReleverCapteur:', error);
         throw error;
     }
 };
 
-// Search Stats
-export const searchStats = async (params: StatsSearchParams): Promise<ApiResponse<Stats>> => {
-    "use cache";
-    cacheLife('hours');
-
+export const CheckConnection = async (): Promise<any> => {
     try {
-        const query = new URLSearchParams(params as Record<string, string>).toString();
-        const res = await fetch(`${API_BASE_URL}/api/stats?${query}`, {
+        logger.debug(`Checking connection to API at: ${API_BASE_URL}`);
+        const res = await fetch(`${API_BASE_URL}/health`, {
             headers: { 'Content-Type': 'application/json' },
         });
 
-        if (!res.ok) throw new Error('Failed to search stats');
+        if (!res.ok) logger.logWithErrorHandling('CheckConnection:', Error('Failed to check connection to API'));
 
-        return await res.json();
+        const response = await res.json();
+        logger.debug(`Connection status: ${JSON.stringify(response)}`);
+        return true;
     } catch (error) {
-        console.error('Error fetching stats:', error);
-        throw error;
+        logger.logWithErrorHandling('Error checking connection:', error);
+        return false;
     }
-};
-
-// Get Sites
-export const fetchSites = async (Id? : UUID): Promise<ApiResponse<SiteHasCapteur>> => {
-    "use cache";
-    cacheLife('days');
-
-    try {
-        const url = Id ? `${API_BASE_URL}/api/sites/${Id}` : `${API_BASE_URL}/api/sites`;
-        const res = await fetch(url, {
-            headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!res.ok) throw new Error('Failed to fetch sites');
-
-        return await res.json();
-    } catch (error) {
-        console.error('Error fetching sites:', error);
-        throw error;
-    }
-};
-
-// Get Capteur Types
-export const fetchCapteurTypes = async (Id? : UUID): Promise<ApiResponse<CapteurType>> => {
-    "use cache";
-    cacheLife('days');
-
-    try {
-        const url = Id ? `${API_BASE_URL}/api/CapteurTypes/${Id}` : `${API_BASE_URL}/api/CapteurTypes`;
-        const res = await fetch(url, {
-            headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!res.ok) throw new Error('Failed to fetch capteur types');
-
-        return await res.json();
-    } catch (error) {
-        console.error('Error fetching capteur types:', error);
-        throw error;
-    }
-};
-
-// Get Capteurs
-export const fetchCapteurs = async (Id? : string): Promise<ApiResponse<Capteur>> => {
-    "use cache";
-    cacheLife('days');
-
-    try {
-        const url = Id ? `${API_BASE_URL}/api/capteurs/${Id}` : `${API_BASE_URL}/api/capteurs`;
-        const res = await fetch(url, {
-            headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!res.ok) throw new Error('Failed to fetch capteurs');
-
-        return await res.json();
-    } catch (error) {
-        console.error('Error fetching capteurs:', error);
-        throw error;
-    }
-};
+}
