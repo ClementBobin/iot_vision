@@ -23,7 +23,7 @@ export const additional = (data: ChartDatas, valueTypes: Array<string>, configIn
     logger.debug(`Transforming additional data`);
     logger.debug(`ValueTypes: ${JSON.stringify(valueTypes)}`);
     logger.debug(`Config Init: ${JSON.stringify(configInit)}`);
-    logger.info(`Transforming data: ${JSON.stringify(data)}`);
+    logger.debug(`Transforming data: ${JSON.stringify(data)}`);
 
     // Check if the data is empty
     if (!data || data.length === 0 || valueTypes.length > 2) {
@@ -34,7 +34,7 @@ export const additional = (data: ChartDatas, valueTypes: Array<string>, configIn
     let timeArray: Array<string> = [];
     // retireve all config.key.label in a list
     const deviceEUI = Object.keys(configInit).filter(key => key !== "views" && key !== "Total" && key !== "ITotal");
-    logger.info(`Device EUI: ${JSON.stringify(deviceEUI)}`);
+    logger.debug(`Device EUI: ${JSON.stringify(deviceEUI)}`);
     switch (valueTypes[0]) {
         case "A":
             logger.debug("ValueType A");
@@ -47,7 +47,7 @@ export const additional = (data: ChartDatas, valueTypes: Array<string>, configIn
                 const deviceWatt = deviceData.map(i => Math.sqrt(3) * 230 * i * 0.9);
                 return deviceWatt;
             });
-            logger.info(`Device Watt: ${JSON.stringify(deviceWatt)}`);
+            logger.debug(`Device Watt: ${JSON.stringify(deviceWatt)}`);
 
             // calculate the total power
             const totalWatt = deviceWatt.reduce((acc, device) => device.map((value, i) => acc[i] = (acc[i] || 0) + value), []);
@@ -62,7 +62,7 @@ export const additional = (data: ChartDatas, valueTypes: Array<string>, configIn
                 TotalWatt: totalWatt[index]
             }));
 
-            logger.info(`Merged data: ${JSON.stringify(mergedData)}`);
+            logger.debug(`Merged data: ${JSON.stringify(mergedData)}`);
 
             const config = {
                 // for each device show the total power
