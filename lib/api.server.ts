@@ -95,3 +95,29 @@ export const CheckConnection = async (): Promise<any> => {
         return { status: false, error: error }; // Return a status of false and the error
     }
 }
+
+// Function to get Alert LowBattery
+export const getAlertLowBattery = async (): Promise<any> => {
+    try {
+        logger.debug(`Checking connection to API at: ${API_BASE_URL}`); // Log the API base URL
+
+        // Make the API request to the health endpoint
+        const res = await fetch(`${API_BASE_URL}/api/alerts/lowbattery`, {
+            headers: { 'Content-Type': 'application/json' }, // Set the request headers
+        });
+
+        // Check if the response is not OK
+        if (!res.ok) {
+            logger.logWithErrorHandling('CheckConnection:', Error('Failed to check connection to API'));
+            return { status: false }; // Return a status of false
+        }
+
+        // Parse the response JSON
+        const response = await res.json();
+        logger.debug(`Connection status: ${JSON.stringify(response)}`); // Log the response
+        return { status: true, ...response }; // Return the status and response
+    } catch (error) {
+        logger.logWithErrorHandling('Error checking connection:', error); // Log any errors
+        return { status: false, error: error }; // Return a status of false and the error
+    }
+}
