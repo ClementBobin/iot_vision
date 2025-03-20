@@ -113,13 +113,11 @@ const QueryForm = () => {
 
     // Handle form submission
     function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(`Form values: ${JSON.stringify(values)}`);
         // Filter out empty values
         const filteredValues = Object.fromEntries(
             Object.entries(values).filter(([_, value]) => value !== '')
         );
 
-        console.log(`Filtered values: ${JSON.stringify(filteredValues)}`);
         // Copy JSON to clipboard
         navigator.clipboard.writeText(JSON.stringify(filteredValues, null, 2));
         setOpen(true); // Open the alert dialog
@@ -138,33 +136,26 @@ const QueryForm = () => {
             form.setValue("TimeEnd", '');
         }
 
-        console.log(`Date range: ${JSON.stringify(date)}`);
     }, [date, form]);
 
     // Set query parameters and navigate to the new URL
     function setQuery() {
         const params = new URLSearchParams();
 
-        console.log(`URLSearchParams: ${JSON.stringify(params)}`);
         // Filter out empty values
         const filteredValues = Object.fromEntries(
             Object.entries(form.getValues()).filter(([_, value]) => value !== '')
         );
 
-        console.log(`Filtered values: ${JSON.stringify(filteredValues)}`);
-
         Object.entries(filteredValues).forEach(([key, value]) => {
             params.append(key, value);
         });
-
-        console.log(`URLSearchParams: ${JSON.stringify(params)}`);
 
         router.push(`?${params.toString()}`);
     }
 
     // Generate the JSON representation of the form values
     const generateJson = () => {
-        console.log(`generateJson: ${JSON.stringify(form.getValues())}`);
         return JSON.stringify(
             Object.fromEntries(
                 Object.entries(form.watch()).filter(([_, value]) => value !== '')

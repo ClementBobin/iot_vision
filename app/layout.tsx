@@ -95,6 +95,7 @@ export default async function RootLayout({ children }: { children: ReactElement 
                     <AlertTitle className="font-bold">API Status: {apiStatus.Api.Result.Status}</AlertTitle>
                     <AlertDescription className=" text-gray-600">
                         {/* Display API and app status details */}
+                        <a href={`${process.env.API_BASE_URL}/docs`} className="underline">API Endpoint Docs</a>
                         Temps de fonctionnement de l'API : {(parseFloat(apiStatus.Api.Result.Uptime) / 60).toFixed(2)} minutes<br />
                         Version de l'API : {apiStatus.Api.Result.Version}<br />
                         Version de l'application : {appVersion}<br />

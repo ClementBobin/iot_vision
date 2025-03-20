@@ -40,7 +40,7 @@ export default async function Page({ searchParams }: { searchParams: { [key: str
             <div className="min-h-screen flex flex-col items-center justify-center">
                 <Suspense fallback={<Skeleton />}>
                     {/* Pass the transformed data to the ViewToggle component */}
-                    <ViewToggle chartData={dataApi.chartData} config={dataApi.chartConfig} preset={config} params={params} />
+                    <ViewToggle chart={dataApi}  preset={config} params={params} />
                 </Suspense>
             </div>
         );

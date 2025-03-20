@@ -33,12 +33,12 @@ describe("transform function", () => {
         ];
         const result: TransformResult = await transform(data, 30);
         expect(result.chartData).toEqual([
-            { date: "2023-10-01T10:00", device1: 10, device2: 30, total: 40 },
-            { date: "2023-10-01T10:30", device1: 20, device2: 40, total: 60 }
+            { date: "2023-10-01T10:00:00", device1: 10, device2: 30, Total: 40 },
+            { date: "2023-10-01T10:30:00", device1: 20, device2: 40, Total: 60 }
         ]);
         expect(result.chartConfig).toHaveProperty("device1");
         expect(result.chartConfig).toHaveProperty("device2");
-        expect(result.chartConfig).toHaveProperty("total");
+        expect(result.chartConfig).toHaveProperty("Total");
     });
 
     it("should handle missing values by setting them to null", async () => {
@@ -58,8 +58,8 @@ describe("transform function", () => {
         ];
         const result: TransformResult = await transform(data, 30);
         expect(result.chartData).toEqual([
-            { date: "2023-10-01T10:00", device1: 10, device2: null, total: 10 },
-            { date: "2023-10-01T10:30", device1: null, device2: 20, total: 20 }
+            { date: "2023-10-01T10:00:00", device1: 10, device2: null, Total: 10 },
+            { date: "2023-10-01T10:30:00", device1: null, device2: 20, Total: 20 }
         ]);
     });
 
@@ -74,6 +74,50 @@ describe("transform function", () => {
         ];
         const result: TransformResult = await transform(data, 30);
         expect(result.chartConfig.device1.color).toMatch(/^#[0-9a-fA-F]{6}$/);
-        expect(result.chartConfig.total.color).toMatch(/^#[0-9a-fA-F]{6}$/);
+        expect(result.chartConfig.Total.color).toMatch(/^#[0-9a-fA-F]{6}$/);
+    });
+
+    it("should handle multiple ValueTypes correctly", async () => {
+        const data = [
+            {
+                DevEUI: "device1",
+                Data: [
+                    { Time: "2023-10-01T10:15:00Z", Value: 10, ValueType: "A" }
+                ]
+            },
+            {
+                DevEUI: "device2",
+                Data: [
+                    { Time: "2023-10-01T10:45:00Z", Value: 20, ValueType: "B" }
+                ]
+            }
+        ];
+        const result: TransformResult = await transform(data, 30);
+        expect(result.chartData).toEqual([
+            { date: "2023-10-01T10:00:00", device1: 10, device2: null, total: 10 },
+            { date: "2023-10-01T10:30:00", device1: null, device2: 20, total: 20 }
+        ]);
+    });
+
+    it("should calculate total correctly for ValueType A", async () => {
+        const data = [
+            {
+                DevEUI: "device1",
+                Data: [
+                    { Time: "2023-10-01T10:15:00Z", Value: 3, ValueType: "A" }
+                ]
+            },
+            {
+                DevEUI: "device2",
+                Data: [
+                    { Time: "2023-10-01T10:45:00Z", Value: 4, ValueType: "A" }
+                ]
+            }
+        ];
+        const result: TransformResult = await transform(data, 30);
+        expect(result.chartData).toEqual([
+            { date: "2023-10-01T10:00:00", device1: 3, device2: null, TotalWatt: 690, ITotal: 3 },
+            { date: "2023-10-01T10:30:00", device1: null, device2: 4, TotalWatt: 920, ITotal: 4 }
+        ]);
     });
 });

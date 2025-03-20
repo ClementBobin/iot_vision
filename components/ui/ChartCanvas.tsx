@@ -1,15 +1,14 @@
-"use client"; // This directive indicates that the component is a client-side component.
+"use client";
 
-import * as React from "react"; // Import React library.
-import { useState } from "react"; // Import useState hook from React.
-import { Line, LineChart, LabelList, CartesianGrid, XAxis } from "recharts"; // Import components from Recharts library.
+import { useState, useEffect } from "react";
+import { Line, LineChart, LabelList, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
     Card,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
-} from "./card"; // Import custom Card components.
+} from "./card";
 import {
     ChartConfig,
     ChartContainer,
@@ -17,103 +16,106 @@ import {
     ChartTooltipContent,
     ChartLegend,
     ChartLegendContent,
-} from "./chart"; // Import custom Chart components.
+} from "./chart";
 import {
-    ChartConfig as ConfigType, ChartDatas
-} from "@/lib/transform"; // Import types from a custom library.
+    TransformResults,
+    TransformResult
+} from "@/lib/transform";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"; // Import custom Select components.
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Import custom Popover components.
-import { Button } from "@/components/ui/button"; // Import custom Button component.
-import { Input } from "@/components/ui/input"; // Import custom Input component.
-import { Check, ChevronsUpDown } from "lucide-react"; // Import icons from lucide-react.
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"; // Import custom Command components.
-import { useRouter } from "next/navigation"; // Import useRouter hook from Next.js.
+} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { useRouter } from "next/navigation";
 import { Label } from "./label";
 import { CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 
 interface ChartCanvasProps {
-    chartData: ChartDatas; // Data for the chart.
-    config: ConfigType; // Configuration for the chart.
+    charts: TransformResults[]; // Array of chart data.
     preset: any; // Preset configurations.
     params: any; // Additional parameters.
 }
 
-// Main component function
-export function ChartCanvas({ chartData, config, preset, params }: ChartCanvasProps) {
-    // Log the chartData, config, preset, and params for debugging.
-    console.log(`chartData: ${JSON.stringify(chartData)}`);
-    console.log(`config: ${JSON.stringify(config)}`);
-    console.log(`preset: ${JSON.stringify(preset)}`);
-    console.log(`params: ${JSON.stringify(params)}`);
-    
-    // Ensure the config matches the ChartConfig type.
-    const chartConfig = config satisfies ChartConfig;
-
+export function ChartCanvas({ charts, preset, params }: ChartCanvasProps) {
     // State variables for time range, filtered data, popover open state, and selected value.
-    const [timeRange, setTimeRange] = React.useState("90d");
-    const [filteredData, setFilteredData] = React.useState(chartData);
+    const [timeRange, setTimeRange] = useState("forever");
+    const [filteredData, setFilteredData] = useState<TransformResults[]>(charts);
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState<string>("");
-    const router = useRouter(); // Initialize router for navigation.
-    const [date, setDate] = useState<DateRange | undefined>(undefined); // State for date range
+    const router = useRouter();
+    const [date, setDate] = useState<DateRange | undefined>(undefined);
 
     // Effect to filter data based on the selected time range and date range.
-    React.useEffect(() => {
+    useEffect(() => {
         const filterData = () => {
-            console.log(`filterData: ${JSON.stringify(filterData)}`);
-            console.log(`timeRange: ${JSON.stringify(timeRange)}`);
-            
-            if (timeRange === "forever" && !date) {
-                return chartData;
-            }
-            
-            const referenceDate = new Date();
-            console.log(`referenceDate: ${JSON.stringify(referenceDate)}`);
-            
-            // Remove 'd' from timeRange to get the number of days to subtract.
-            const daysToSubtract = parseInt(timeRange.replace("d", ""));
-            console.log(`daysToSubtract: ${JSON.stringify(daysToSubtract)}`);
+            return charts.map((chart) => {
+                const filteredChartData = chart.chartData.filter((item: { date: string }) => {
+                    const itemDate = new Date(item.date);
+                    const timeStart = new Date();
+                    switch (timeRange) {
+                        case "forever":
+                            return true;
+                        case "90d":
+                            timeStart.setDate(timeStart.getDate() - 90);
+                            return itemDate >= timeStart;
+                        case "30d":
+                            timeStart.setDate(timeStart.getDate() - 30);
+                            return itemDate >= timeStart;
+                        case "7d":
+                            timeStart.setDate(timeStart.getDate() - 7);
+                            return itemDate >= timeStart;
+                        default:
+                            return true;
+                    }
+                });
 
-            const startDate = new Date(referenceDate);
-            console.log(`startDate: ${JSON.stringify(startDate)}`);
-            startDate.setDate(startDate.getDate() - daysToSubtract);
+                if (date) {
+                    return {
+                        ...chart,
+                        chartData: filteredChartData.filter((item: { date: string }) => {
+                            const itemDate = new Date(item.date);
+                            return date.from && date.to && itemDate >= date.from && itemDate <= date.to;
+                        }),
+                    };
+                }
 
-            // Filter the chart data based on the calculated start date and selected date range.
-            const result = chartData.filter((item) => {
-                const itemDate = new Date(item.date);
-                const isWithinTimeRange = timeRange === "forever" || itemDate >= startDate;
-                const isWithinDateRange = !date || (date.from && date.to && itemDate >= date.from && itemDate <= date.to);
-                return isWithinTimeRange && isWithinDateRange;
+                return {
+                    ...chart,
+                    chartData: filteredChartData,
+                };
             });
-            
-            console.log(`result: ${JSON.stringify(result)}`);
-            return result;
         };
 
-        setFilteredData(filterData());
-    }, [chartData, timeRange, date]);
+        const filteredDataResult = filterData();
+        console.log(filteredDataResult);
+        if (JSON.stringify(filteredData) !== JSON.stringify(filteredDataResult)) {
+            setFilteredData(filteredDataResult);
+        }
+    }, [charts, timeRange, date]);
 
     // Function to set query parameters in the URL.
     function setQuery(query: any) {
-        console.log(`query: ${JSON.stringify(query)}`);
-        const params = new URLSearchParams();
-        console.log(`params: ${JSON.stringify(params)}`);
+        console.log(query);
+        const searchParams = new URLSearchParams(params);
 
-        Object.entries(query).forEach(([key, value]) => {
-            params.append(key, value);
-        });
+        for (const key in query) {
+            if (query[key] === "") {
+                searchParams.delete(key);
+            } else {
+                searchParams.set(key, query[key]);
+            }
+        }
 
-        console.log(`params: ${JSON.stringify(params)}`);
-
-        router.push(`?${params.toString()}`);
+        router.push(`?${searchParams.toString()}`);
     }
 
     return (
@@ -128,17 +130,17 @@ export function ChartCanvas({ chartData, config, preset, params }: ChartCanvasPr
                 <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
                     <div className="flex items-center gap-2">
                         <Label>Intervale en minutes:</Label>
-                        <Input 
+                        <Input
                             className="rounded-lg w-full"
-                            placeholder="Intervale..." 
-                            value={params.IntervaleQueryMinutes || ""} 
+                            placeholder="Intervale..."
+                            value={params.IntervaleQueryMinutes || ""}
                             onChange={(e) => {
                                 const newValue = e.target.value;
                                 if (/^[1-9]\d*$/.test(newValue) || newValue === "") {
-                                    params.IntervaleQueryMinutes = newValue;
-                                    setQuery(params);
+                                    const newParams = { ...params, IntervaleQueryMinutes: newValue };
+                                    setQuery(newParams);
                                 }
-                            }} 
+                            }}
                         />
                     </div>
                     <Select value={timeRange} onValueChange={(newValue) => { setTimeRange(newValue); setDate(undefined); }}>
@@ -164,7 +166,7 @@ export function ChartCanvas({ chartData, config, preset, params }: ChartCanvasPr
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-full p-0">
+                        <PopoverContent className="w-auto p-0" align="start">
                             <Command>
                                 <CommandInput placeholder="Rechercher un preset..." />
                                 <CommandList>
@@ -194,61 +196,13 @@ export function ChartCanvas({ chartData, config, preset, params }: ChartCanvasPr
                 </div>
             </CardHeader>
             <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-                <ChartContainer
-                    config={chartConfig}
-                    className="aspect-auto h-[250px] w-full"
-                >
-                    <LineChart accessibilityLayer data={filteredData} margin={{left: 12, right: 12}}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                            dataKey="date"
-                            tickLine={false}
-                            axisLine={false}
-                            tickMargin={8}
-                            minTickGap={32}
-                            tickFormatter={(value) => {
-                                const date = new Date(value);
-                                return date.toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "numeric",
-                                    minute: "numeric",
-                                });
-                            }}
-                        />
-                        <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent
-                                labelFormatter={(value) => {
-                                    return new Date(value).toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                        hour: "numeric",
-                                        minute: "numeric",
-                                    });
-                                }}
-                                indicator="line"
-                            />}
-                        />
-                        {Object.keys(chartConfig).map((key) => (
-                            <Line
-                                key={key}
-                                dataKey={key}
-                                type="natural"
-                                stroke={chartConfig[key].color}
-                                strokeWidth={2}
-                                dot={{fill: chartConfig[key].color}}
-                            />
-                        ))}
-                        <LabelList
-                            position="top"
-                            offset={12}
-                            className="fill-foreground"
-                            fontSize={12}
-                        />
-                        <ChartLegend content={<ChartLegendContent />} />
-                    </LineChart>
-                </ChartContainer>
+                {filteredData.length > 0 ? (
+                    filteredData.map((chart, index) => (
+                        <ChartCanvasContainer key={index} chart={chart} />
+                    ))
+                ) : (
+                    <p className="text-center">Aucune donnée disponible pour la période sélectionnée.</p>
+                )}
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start text-left font-normal">
@@ -267,7 +221,7 @@ export function ChartCanvas({ chartData, config, preset, params }: ChartCanvasPr
                                 </span>
                             ) : (
                                 "Sélectionnez une plage de dates"
-                            )}      
+                            )}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -285,5 +239,85 @@ export function ChartCanvas({ chartData, config, preset, params }: ChartCanvasPr
                 </Popover>
             </CardContent>
         </Card>
+    );
+}
+
+function ChartCanvasContainer({ chart }: { chart: TransformResult }) {
+    const chartConfig = chart.chartConfig satisfies ChartConfig;
+    const chartData = chart.chartData;
+
+    return (
+        <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[250px] w-full"
+        >
+            <LineChart accessibilityLayer data={chartData} margin={{ left: 12, right: 12 }}>
+                <CartesianGrid vertical={false} />
+                <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={16}
+                    tickFormatter={(value) => {
+                        // Get the name of the chart from the config object last label
+                        const name = Object.keys(chartConfig)[Object.keys(chartConfig).length - 1].toUpperCase();
+                        if (name === "ITOTAL") {
+                            return `${value} A`;
+                        }
+                        if (name === "TOTALWATT") {
+                            return `${value} W`;
+                        }
+                        return value.toString();
+                    }}
+                />
+                <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={32}
+                    tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return date.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
+                        });
+                    }}
+                />
+                <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent
+                        labelFormatter={(value) => {
+                            return new Date(value).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                hour: "numeric",
+                                minute: "numeric",
+                            });
+                        }}
+                        indicator="line"
+                    />}
+                />
+                {Object.keys(chartConfig).map((key) => (
+                    <Line
+                        key={key}
+                        dataKey={key}
+                        type="natural"
+                        stroke={chartConfig[key].color}
+                        strokeWidth={2}
+                        dot={{ fill: chartConfig[key].color }}
+                    />
+                ))}
+                <LabelList
+                    position="top"
+                    offset={12}
+                    className="fill-foreground"
+                    fontSize={12}
+                />
+                <ChartLegend content={<ChartLegendContent />} />
+            </LineChart>
+        </ChartContainer>
     );
 }

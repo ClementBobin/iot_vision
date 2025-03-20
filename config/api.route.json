@@ -1,20 +1,20 @@
 [
     {
-        "NameQuery": "éclairage Actemium",
-        "DescriptionQuery": "éclairage générale Actemium",
+        "NameQuery": "Eclairage Actemium",
+        "DescriptionQuery": "Eclairage générale Actemium",
         "IntervaleQueryMinutes": 5,
         "SiteName": "Agence Actemium",
         "CapteurName": "Phases éclairage générale",
-        "LastTimePeriod": "30d"
+        "LastTimePeriod": "1y"
     },
     {
-        "NameQuery": "Bornes IRNE Actemium",
-        "DescriptionQuery": "Bornes IRNE Actemium",
+        "NameQuery": "Bornes IRVE Actemium",
+        "DescriptionQuery": "Bornes IRVE Actemium",
         "IntervaleQueryMinutes": 30,
         "SiteName": "Agence Actemium",
-        "CapteurName": "Phases Bornes IRNE",
+        "CapteurName": "Phases Bornes IRVE",
         "Module": "LORA",
-        "LastTimePeriod": "30d"
+        "LastTimePeriod": "1y"
     },
     {
         "NameQuery": "Linky Actemium",
@@ -23,7 +23,7 @@
         "SiteName": "Agence Actemium",
         "CapteurName": "Compteur Linky",
         "Module": "LORA",
-        "LastTimePeriod": "30d"
+        "LastTimePeriod": "1y"
     }, 
     {
         "NameQuery": "Eau Actemium",
@@ -32,6 +32,6 @@
         "SiteName": "Agence Actemium",
         "CapteurName": "Compteur Eau",
         "Module": "LORA",
-        "LastTimePeriod": "30d"
+        "LastTimePeriod": "1y"
     }
 ]
