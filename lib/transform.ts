@@ -31,7 +31,9 @@ export const additional = (data: ChartDatas, valueTypes: Array<string>, configIn
         return [];
     }
 
-    let timeArray: Array<string> = [];
+    const timeArray: Array<string> = data.map((entry) => entry.date);
+
+
     // retireve all config.key.label in a list
     const deviceEUI = Object.keys(configInit).filter(key => key !== "views" && key !== "Total" && key !== "ITotal");
     logger.debug(`Device EUI: ${JSON.stringify(deviceEUI)}`);
@@ -39,47 +41,56 @@ export const additional = (data: ChartDatas, valueTypes: Array<string>, configIn
         case "A":
             logger.debug("ValueType A");
 
-            // p = Racine carré(3) u * i * cos phi
-            // calculate the total power for each device
-            const deviceWatt = deviceEUI.map((name, i) => {
-                const deviceData = data.map(record => record[name] || 0);
-                timeArray = data.map(record => record.date);
-                const deviceWatt = deviceData.map(i => Math.sqrt(3) * 230 * i * 0.9);
-                return deviceWatt;
-            });
-            logger.debug(`Device Watt: ${JSON.stringify(deviceWatt)}`);
-
+            // p = Racine carré(3) * 400 * i * 0.90
             // calculate the total power
-            const totalWatt = deviceWatt.reduce((acc, device) => device.map((value, i) => acc[i] = (acc[i] || 0) + value), []);
+            const totalWatt = data.map((entry) => { return Math.sqrt(3) * 400 * entry.ITotal * 0.90 });
 
             // Merge the deviceWatt and totalWatt into a single object with the date from the timeArray
             const mergedData = timeArray.map((date, index) => ({
                 date,
-                ...deviceEUI.reduce((acc, name, i) => {
-                    acc[name] = deviceWatt[i][index] || 0;
-                    return acc;
-                }, {} as Record<string, number>),
-                TotalWatt: totalWatt[index]
+                TotalWatt: totalWatt[index],
             }));
 
             logger.debug(`Merged data: ${JSON.stringify(mergedData)}`);
 
             const config = {
-                // for each device show the total power
-                ...deviceEUI.reduce((acc, name) => {
-                    acc[name] = {
-                        label: `${configInit[name].label}`,
-                        color: `#${((Math.random() * 0xffffff) << 0).toString(16).padStart(6, '0')}`
-                    };
-                    return acc;
-                }, {} as Record<string, { label: string; color: string }>),
                 TotalWatt: {
-                    label: 'Total Watt',
+                    label: 'Puissance [W]',
                     color: '#000000' // Black color for totalWatt
                 },
             };
 
-            return [{ chartData: mergedData, chartConfig: config }];
+            // Merge the deviceWatt and totalWatt into a single object with the date from the timeArray
+            const mergedDataByHour = Object.values(
+                mergedData.reduce((acc, entry) => {
+                  const date = new Date(entry.date);
+                  const hourKey = date.toISOString().slice(0, 13); // Format "YYYY-MM-DDTHH"
+              
+                  if (!acc[hourKey]) {
+                    acc[hourKey] = { date: `${hourKey}:00:00`, TotalWatt: 0 };
+                  }
+              
+                  acc[hourKey].TotalWatt += entry.TotalWatt; // Sum TotalWatt values for the same hour
+              
+                  return acc;
+                }, {})
+              ).map(({ date, TotalWatt }) => ({
+                date,
+                PowerHeure: TotalWatt * (1 / 6), // Apply the 1/6 factor
+              }));
+
+            const config2 = {
+                PowerHeure: {
+                    label: 'Consommation [Wh]',
+                    color: '#000000' // Black color for totalWatt
+                },
+            };
+
+
+            logger.debug(`Additional data: ${JSON.stringify([{ chartData: mergedData, chartConfig: config }])}`);
+            logger.info(`Additional data: ${JSON.stringify([{ chartData: mergedData, chartConfig: config }, { chartData: mergedDataByHour, chartConfig: config2 }])}`);
+
+            return [{ chartData: mergedData, chartConfig: config }, { chartData: mergedDataByHour, chartConfig: config2 }];
         default:
             return null;
     }
@@ -220,14 +231,8 @@ export const transform = async (data: any[], n: number = 30) => {
                 }
                 if (entry.ITotal !== undefined) {
                     acc.ITotal = {
-                        label: 'Intensité Ampère',
+                        label: 'Intensité Totale [A]', 
                         color: '#FF0000' // Red color for ITotal
-                    };
-                }
-                if (entry.Total !== undefined) {
-                    acc.Total = {
-                        label: 'Total',
-                        color: '#000000' // Black color for total
                     };
                 }
                 return acc;

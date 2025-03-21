@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Line, LineChart, LabelList, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Line, LineChart, LabelList, CartesianGrid, XAxis, YAxis, Area, AreaChart } from "recharts";
 import {
     Card,
     CardContent,
@@ -196,13 +196,15 @@ export function ChartCanvas({ charts, preset, params }: ChartCanvasProps) {
                 </div>
             </CardHeader>
             <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-                {filteredData.length > 0 ? (
-                    filteredData.map((chart, index) => (
-                        <ChartCanvasContainer key={index} chart={chart} />
-                    ))
-                ) : (
-                    <p className="text-center">Aucune donnée disponible pour la période sélectionnée.</p>
-                )}
+                <div className="grid gap-30">
+                    {filteredData.length > 0 ? (
+                        filteredData.map((chart, index) => (
+                            <ChartCanvasContainer key={index} chart={chart} />
+                        ))
+                    ) : (
+                        <p className="text-center">Aucune donnée disponible pour la période sélectionnée.</p>
+                    )}
+                </div>
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start text-left font-normal">
@@ -245,79 +247,146 @@ export function ChartCanvas({ charts, preset, params }: ChartCanvasProps) {
 function ChartCanvasContainer({ chart }: { chart: TransformResult }) {
     const chartConfig = chart.chartConfig satisfies ChartConfig;
     const chartData = chart.chartData;
+    const name = Object.keys(chartConfig)[Object.keys(chartConfig).length - 1].toUpperCase();
+
+    // get label for the chart based on the name
+    const label = name === "POWERHEURE" ? "Consommation" : name === "ITOTAL" ? "Courant" : "Puissance";
 
     return (
-        <ChartContainer
-            config={chartConfig}
-            className="aspect-auto h-[250px] w-full"
-        >
-            <LineChart accessibilityLayer data={chartData} margin={{ left: 12, right: 12 }}>
-                <CartesianGrid vertical={false} />
-                <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    minTickGap={16}
-                    tickFormatter={(value) => {
-                        // Get the name of the chart from the config object last label
-                        const name = Object.keys(chartConfig)[Object.keys(chartConfig).length - 1].toUpperCase();
-                        if (name === "ITOTAL") {
-                            return `${value} A`;
-                        }
-                        if (name === "TOTALWATT") {
-                            return `${value} W`;
-                        }
-                        return value.toString();
-                    }}
-                />
-                <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    minTickGap={32}
-                    tickFormatter={(value) => {
-                        const date = new Date(value);
-                        return date.toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "numeric",
-                        });
-                    }}
-                />
-                <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent
-                        labelFormatter={(value) => {
-                            return new Date(value).toLocaleDateString("en-US", {
+        <div className="flex flex-col justify-center items-center gap-4">
+            <h1>{label}</h1>
+            <ChartContainer
+                config={chartConfig}
+                className="aspect-auto h-[250px] w-full"
+            >
+                { name === "POWERHEURE" ? (
+                    <AreaChart accessibilityLayer data={chartData} margin={{ left: 12, right: 12 }}>
+                        <CartesianGrid vertical={false} />
+                        <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                            minTickGap={16}
+                            tickFormatter={(value) => {
+                                return `${value} Wh`;
+                            }}
+                        />
+                        <XAxis
+                            dataKey="date"
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                            minTickGap={32}
+                            tickFormatter={(value) => {
+                                const date = new Date(value);
+                                return date.toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "numeric",
+                                    minute: "numeric",
+                                });
+                            }}
+                        />
+                        <ChartTooltip
+                            cursor={false}
+                            content={<ChartTooltipContent
+                                labelFormatter={(value) => {
+                                    return new Date(value).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "numeric",
+                                        minute: "numeric",
+                                    });
+                                }}
+                                indicator="line"
+                            />}
+                        />
+                        {Object.keys(chartConfig).map((key) => (
+                            <Area
+                                key={key}
+                                dataKey={key}
+                                type="natural"
+                                stroke={chartConfig[key].color}
+                                strokeWidth={2}
+                                dot={{ fill: chartConfig[key].color }}
+                            />
+                        ))}
+                        <LabelList
+                            position="top"
+                            offset={12}
+                            className="fill-foreground"
+                            fontSize={12}
+                        />
+                        <ChartLegend content={<ChartLegendContent />} />
+                    </AreaChart>
+                ) : (
+                <LineChart accessibilityLayer data={chartData} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} />
+                    <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        minTickGap={16}
+                        tickFormatter={(value) => {
+                            if (name === "ITOTAL") {
+                                return `${value} A`;
+                            }
+                            if (name === "TOTALWATT") {
+                                return `${value} W`;
+                            }
+                            return value.toString();
+                        }}
+                    />
+                    <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        minTickGap={32}
+                        tickFormatter={(value) => {
+                            const date = new Date(value);
+                            return date.toLocaleDateString("en-US", {
                                 month: "short",
                                 day: "numeric",
                                 hour: "numeric",
                                 minute: "numeric",
                             });
                         }}
-                        indicator="line"
-                    />}
-                />
-                {Object.keys(chartConfig).map((key) => (
-                    <Line
-                        key={key}
-                        dataKey={key}
-                        type="natural"
-                        stroke={chartConfig[key].color}
-                        strokeWidth={2}
-                        dot={{ fill: chartConfig[key].color }}
                     />
-                ))}
-                <LabelList
-                    position="top"
-                    offset={12}
-                    className="fill-foreground"
-                    fontSize={12}
-                />
-                <ChartLegend content={<ChartLegendContent />} />
-            </LineChart>
-        </ChartContainer>
+                    <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent
+                            labelFormatter={(value) => {
+                                return new Date(value).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "numeric",
+                                    minute: "numeric",
+                                });
+                            }}
+                            indicator="line"
+                        />}
+                    />
+                    {Object.keys(chartConfig).map((key) => (
+                        <Line
+                            key={key}
+                            dataKey={key}
+                            type="natural"
+                            stroke={chartConfig[key].color}
+                            strokeWidth={2}
+                            dot={{ fill: chartConfig[key].color }}
+                        />
+                    ))}
+                    <LabelList
+                        position="top"
+                        offset={12}
+                        className="fill-foreground"
+                        fontSize={12}
+                    />
+                    <ChartLegend content={<ChartLegendContent />} />
+                </LineChart>
+                )}
+            </ChartContainer>
+        </div>
     );
 }
